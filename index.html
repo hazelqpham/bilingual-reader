@@ -5,19 +5,277 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Bilingual Phrase Reader</title>
 <style>
-:root{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:#183020;background:#f5f7f2}*{box-sizing:border-box}body{margin:0}.shell{max-width:1100px;margin:auto;padding:24px 18px 65px}header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}h1{font-size:clamp(23px,3vw,34px);margin:0}p{line-height:1.55}.hint{color:#516255;font-size:14px}.panel{border-radius:16px;background:white;border:1px solid #dce4da;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px #162c1a09}.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}button,.file-label{font:inherit;border-radius:10px;padding:10px 13px;border:1px solid #c6d1c4;background:#fff;color:#173821;cursor:pointer;font-weight:600}button:hover,.file-label:hover{background:#edf3e9}button.primary{background:#27563a;color:white;border-color:#27563a}button.primary:hover{background:#19452c}button[aria-pressed=true]{background:#dcefdc;border-color:#72a67c}.reader{background:#263e2a;color:#fff;border-radius:16px;padding:clamp(18px,3vw,34px);min-height:200px}.reader h2{font-size:18px;margin:0 0 22px;color:#fff}.paragraph{display:flex;flex-wrap:wrap;gap:18px 20px;align-items:flex-start;margin-bottom:24px}.paragraph:last-child{margin-bottom:0}.pair{display:flex;flex-direction:column;gap:5px;max-width:100%;min-width:0;break-inside:avoid;vertical-align:top}.vi{font-size:clamp(16px,1.9vw,21px);font-weight:700;line-height:1.4;overflow-wrap:break-word}.en{color:#ffdb75;font-size:clamp(16px,1.9vw,21px);font-weight:700;line-height:1.4;overflow-wrap:break-word}.hidden-en .en{visibility:hidden}.hidden-vi .vi{visibility:hidden}.clickable .pair{cursor:pointer;border-radius:5px}.clickable .pair:hover{outline:1px dashed #86b993;outline-offset:5px}.pair.revealed .en,.pair.revealed .vi{visibility:visible}.editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}textarea,input[type=text]{font:inherit;padding:11px;border:1px solid #bac9b7;border-radius:9px;width:100%}textarea{min-height:260px;resize:vertical;font-family:ui-monospace,Consolas,monospace;font-size:13px;line-height:1.55}.small{font-size:13px;color:#526558}details summary{cursor:pointer;font-weight:700}pre{white-space:pre-wrap;background:#f0f4ee;border-radius:8px;padding:10px;font-size:12px}.notice{background:#fef4d2;padding:10px 12px;border-radius:9px;color:#664800;font-size:13px}.status{font-size:13px;color:#466c4d;min-height:20px}.foot{margin-top:16px}.file-label input{display:none}@media(max-width:640px){.editor-grid{grid-template-columns:1fr}.shell{padding:15px 12px 50px}.reader{padding:20px 16px}.paragraph{gap:15px 14px}}@media print{body{background:white}.shell{max-width:none;padding:0}.panel.controls,.panel.editor,.toolbar,.hint,header button{display:none!important}.reader{background:white!important;color:#111!important;padding:0}.reader h2,.vi{color:black!important}.en{color:#9a6200!important}.pair{break-inside:avoid}.hidden-en .en,.hidden-vi .vi{visibility:visible!important}}
+  :root {
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+    --paper: #f7f6f1;
+    --sidebar-paper: #f1efe6;
+    --forest: #183d2b;
+    --sidebar-width: 196px;
+    --rail-width: 56px;
+    color: var(--forest);
+    background: var(--paper);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  [hidden] { display: none !important; }
+  .shell { min-height: 100vh; }
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    width: var(--sidebar-width);
+    padding: 16px 8px 8px;
+    background: var(--sidebar-paper);
+    border-right: 1px solid #deded0;
+  }
+  .sidebar.collapsed { width: var(--rail-width); }
+  .sidebar-artwork {
+    display: block;
+    align-self: center;
+    width: min(100%, 158px);
+    height: auto;
+    max-height: 40vh;
+    margin: auto 0 0;
+    object-fit: contain;
+    opacity: .78;
+    mix-blend-mode: multiply;
+    mask-image: radial-gradient(ellipse 76% 69% at 50% 48%, #000 50%, transparent 96%);
+  }
+  .sidebar.collapsed .sidebar-artwork { display: none; }
+  .content {
+    min-width: 0;
+    margin-left: var(--sidebar-width);
+    padding: clamp(16px, 3.3vw, 48px);
+  }
+  .sidebar.collapsed + .content { margin-left: var(--rail-width); }
+  h1 {
+    font-size: clamp(15px, 1.8vw, 19px);
+    font-weight: 650;
+    letter-spacing: .015em;
+    margin: 0 0 16px;
+  }
+  p { line-height: 1.55; }
+  .hint { color: #516255; font-size: 14px; }
+  .panel {
+    border-radius: 16px;
+    background: #fff;
+    border: 1px solid #dce4da;
+    padding: 20px;
+    margin-top: 16px;
+  }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; }
+  button, .file-label {
+    font: inherit;
+    border-radius: 10px;
+    padding: 10px 13px;
+    border: 1px solid #c6d1c4;
+    background: #fff;
+    color: #173821;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  button:hover, .file-label:hover { background: #edf3e9; }
+  button.primary { background: #27563a; color: #fff; border-color: #27563a; }
+  button.primary:hover { background: #19452c; }
+  button[aria-pressed="true"] { background: #dcefdc; border-color: #72a67c; }
+  :focus-visible, .file-label:focus-within { outline: 2px solid #287649; outline-offset: 3px; }
+  .sidebar button {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 42px;
+    padding: 6px;
+    border-radius: 8px;
+    border-color: transparent;
+    background: transparent;
+    text-align: left;
+    font-size: 13px;
+  }
+  .sidebar button:hover { background: #e9ebdf; }
+  .sidebar button[aria-pressed="true"] { background: #e0eadc; border-color: #c7d8c4; }
+  .sidebar-group {
+    display: grid;
+    gap: 3px;
+    border-top: 1px solid #deded0;
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+  .sidebar-icon {
+    flex: 0 0 24px;
+    width: 24px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.55;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .collapsed #sidebar-chevron { transform: scaleX(-1); }
+  .collapsed .nav-label, .file-label input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .collapsed button:is(:hover, :focus-visible)::after {
+    content: attr(data-tooltip) / "";
+    position: absolute;
+    left: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1;
+    width: max-content;
+    max-width: 65vw;
+    padding: 7px 10px;
+    border-radius: 6px;
+    background: #183020;
+    color: #fff;
+    pointer-events: none;
+  }
+  .reader {
+    background: var(--forest);
+    color: #fff;
+    border-radius: 16px;
+    padding: clamp(16px, 4vw, 56px);
+    min-height: 340px;
+    overflow-wrap: anywhere;
+  }
+  .reader h2 {
+    font: 400 clamp(24px, 3.2vw, 38px)/1.18 Georgia, serif;
+    margin: 0 0 20px;
+  }
+  .reader-hint { color: #e0e9df; font-size: 14px; }
+  .paragraph {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px 24px;
+    align-items: flex-start;
+  }
+  .paragraph + .paragraph {
+    border-top: 1px solid #ffffff2b;
+    margin-top: 25px;
+    padding-top: 25px;
+  }
+  .pair {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 5px;
+    max-width: 100%;
+    min-width: 0;
+    break-inside: avoid;
+  }
+  .vi, .en { font-size: clamp(16px, 1.9vw, 21px); font-weight: 550; line-height: 1.5; }
+  .en { color: #f4cf75; font-weight: 700; }
+  .hidden-en .en, .hidden-vi .vi { visibility: hidden; }
+  .clickable .pair { cursor: pointer; border-radius: 5px; }
+  .clickable .pair:hover, .clickable .pair:focus-visible {
+    outline: 2px solid #a2d3ab;
+    outline-offset: 4px;
+  }
+  .pair.revealed .en { visibility: visible; }
+  .editor-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  textarea, input[type="text"] {
+    font: inherit;
+    padding: 11px;
+    border: 1px solid #bac9b7;
+    border-radius: 9px;
+    width: 100%;
+  }
+  textarea { min-height: 260px; resize: vertical; font: 13px/1.55 ui-monospace, Consolas, monospace; }
+  .field-label { display: block; margin: 1em 0; font-weight: 700; }
+  .small, .status { font-size: 13px; color: #46604d; }
+  .status { min-height: 20px; }
+  pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    background: #f0f4ee;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 12px;
+  }
+  .notice { background: #fef4d2; padding: 10px 12px; border-radius: 9px; color: #664800; font-size: 13px; }
+  .foot { margin-top: 16px; }
+  @media (max-height: 550px) {
+    .sidebar-artwork { display: none; }
+  }
+  @media (max-height: 370px) {
+    .sidebar { overflow-y: auto; }
+  }
+  @media (max-width: 680px) {
+    .sidebar { box-shadow: 4px 0 16px #162c1a24; }
+    .content { margin-left: var(--rail-width); padding: 12px; }
+    .editor-grid { grid-template-columns: minmax(0, 1fr); }
+    .paragraph { gap: 14px 16px; }
+  }
+  @media print {
+    body { background: #fff; }
+    .sidebar, .panel.editor, .hint, .reader-hint { display: none !important; }
+    .content, .sidebar.collapsed + .content { margin: 0; padding: 0; }
+    .reader { background: #fff; color: #111; padding: 0; min-height: 0; }
+    .en { color: #805300; }
+    .paragraph + .paragraph { border-color: #ddd; }
+    .hidden-en .en, .hidden-vi .vi { visibility: visible !important; }
+  }
 </style>
 </head>
-<body><main class="shell"><header><div><h1>📖 Bilingual Phrase Reader</h1><p class="hint">Vietnamese above English · Automatic alignment · No manual columns</p></div><button onclick="window.print()">🖨 Print / Save PDF</button></header>
-<section class="panel controls"><strong>Study mode</strong><div class="toolbar"><button id="both" aria-pressed="true">Show both</button><button id="hide-en" aria-pressed="false">Hide English</button><button id="hide-vi" aria-pressed="false">Hide Vietnamese</button><button id="practice" aria-pressed="false">Tap to reveal</button><button id="edit-toggle">✏️ Edit lesson</button></div><div class="small">In “Tap to reveal,” select a phrase to reveal its hidden English translation.</div></section>
-<section class="panel"><div class="reader" id="reader"><h2 id="lesson-title">First Message from the Virgin Mary</h2><div id="passages"></div></div></section>
-<section class="panel editor" id="editor" hidden><h2>Edit lesson</h2><p class="hint">Paste one aligned Vietnamese–English pair per line. Separate the two with a <b>TAB</b> (or <b> | </b>). Leave a blank line to start a new paragraph. You can ask ChatGPT to generate this exact format.</p><label for="title-input"><b>Title</b></label><input type="text" id="title-input" value="First Message from the Virgin Mary"/><div class="editor-grid"><div><p><b>Phrase pairs</b></p><textarea id="pairs-input" spellcheck="false"></textarea></div><div><p><b>How to paste</b></p><pre>(Loan báo | (Announcing
+<body>
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="Reader controls">
+    <button id="sidebar-toggle" type="button" aria-controls="sidebar-actions" aria-expanded="true" data-tooltip="Expand sidebar">
+      <svg class="sidebar-icon" id="sidebar-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>
+      <span class="nav-label" id="sidebar-toggle-label">Collapse sidebar</span>
+    </button>
+    <div id="sidebar-actions">
+      <div class="sidebar-group" role="group" aria-label="Study mode">
+        <button id="both" aria-pressed="true" data-tooltip="Show both">
+          <svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v14H3zM7 9h10M7 15h10"/></svg><span class="nav-label">Show both</span>
+        </button>
+        <button id="hide-en" aria-pressed="false" data-tooltip="Hide English">
+          <svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v14H3zM7 9h10M7 15h3m3 0h4"/></svg><span class="nav-label">Hide English</span>
+        </button>
+        <button id="hide-vi" aria-pressed="false" data-tooltip="Hide Vietnamese">
+          <svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v14H3zM7 9h3m3 0h4M7 15h10"/></svg><span class="nav-label">Hide Vietnamese</span>
+        </button>
+        <button id="practice" aria-pressed="false" aria-describedby="practice-hint" data-tooltip="Tap to reveal">
+          <svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="2.5"/></svg><span class="nav-label">Tap to reveal</span>
+        </button>
+      </div>
+      <div class="sidebar-group">
+        <button id="edit-toggle" aria-controls="editor" aria-expanded="false" data-tooltip="Edit lesson">
+          <svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6 4 4M4 20l4.5-1 11-11a2.8 2.8 0 0 0-4-4l-11 11L4 20Z"/></svg><span class="nav-label">Edit lesson</span>
+        </button>
+        <button id="print" data-tooltip="Print / Save PDF">
+          <svg class="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V3h10v5M7 17H4V8h16v9h-3M7 14h10v7H7zM16 11h1"/></svg><span class="nav-label">Print / Save PDF</span>
+        </button>
+      </div>
+    </div>
+    <img class="sidebar-artwork" src="image/MotherMary.jpg" width="1079" height="1620"
+      alt="The Virgin Mary">
+  </nav>
+  <main class="content">
+    <header><h1>Bilingual Phrase Reader</h1></header>
+    <section class="reader" id="reader" aria-labelledby="lesson-title">
+      <h2 id="lesson-title">First Message from the Virgin Mary</h2>
+      <p class="reader-hint" id="practice-hint" hidden>Select a phrase to reveal its English translation.</p>
+      <div id="passages"></div>
+    </section>
+<section class="panel editor" id="editor" hidden><h2>Edit lesson</h2><p class="hint">Paste one aligned Vietnamese–English pair per line. Separate the two with a <b>TAB</b> (or <b> | </b>). Leave a blank line to start a new paragraph. You can ask ChatGPT to generate this exact format.</p><label for="title-input"><b>Title</b></label><input type="text" id="title-input" value="First Message from the Virgin Mary"/><div class="editor-grid"><div><label class="field-label" for="pairs-input">Phrase pairs</label><textarea id="pairs-input" spellcheck="false"></textarea></div><div><p><b>How to paste</b></p><pre>(Loan báo | (Announcing
 những lời tiên tri trong tương lai | the future prophecies
 vẫn còn | still
 sẽ được tiếp nhận | to be received
 
 bởi | by
-người nhận thị kiến riêng tư, | private visionary,</pre><p class="notice">The vertical bar <b>|</b> separates the two languages. Avoid using it inside a phrase. Blank lines create new paragraphs.</p><p class="small">Everything runs in this browser. “Save lesson” stores your work on this device. “Download lesson” creates a backup text file.</p></div></div><div class="toolbar"><button class="primary" id="save">Save lesson</button><button id="export">Download lesson (.txt)</button><label class="file-label">Import lesson <input type="file" id="import" accept=".txt,text/plain"/></label><button id="restore">Restore example</button></div><div class="status" id="status"></div></section><p class="foot hint">For classroom use, create or translate the phrase pairs carefully. This reader aligns phrases automatically; it does not perform AI translation.</p></main>
+người nhận thị kiến riêng tư, | private visionary,</pre><p class="notice">The vertical bar <b>|</b> separates the two languages. Avoid using it inside a phrase. Blank lines create new paragraphs.</p><p class="small">Everything runs in this browser. “Save lesson” stores your work on this device. “Download lesson” creates a backup text file.</p></div></div><div class="toolbar"><button class="primary" id="save">Save lesson</button><button id="export">Download lesson (.txt)</button><label class="file-label">Import lesson <input type="file" id="import" accept=".txt,text/plain"/></label><button id="restore">Restore example</button></div><div class="status" id="status" role="status"></div></section><p class="foot hint">For classroom use, create or translate the phrase pairs carefully. This reader aligns phrases automatically; it does not perform AI translation.</p>
+  </main>
+</div>
 <script>
 const SAMPLE=`Thông điệp đầu tiên | First Message
 từ | from
@@ -54,9 +312,117 @@ vào thời điểm ấy.) | at this point.)`;
 const el=id=>document.getElementById(id);let mode='both';
 let state={title:'First Message from the Virgin Mary',pairs:SAMPLE};try{const saved=localStorage.getItem('bilingual-reader-v1');if(saved){const parsed=JSON.parse(saved);if(typeof parsed.title==='string'&&typeof parsed.pairs==='string')state=parsed;}}catch{}
 function parse(s){return s.trim().split(/\n\s*\n/).map(block=>block.split('\n').map(line=>{let parts=line.split(/\s*\|\s*/);if(parts.length<2)parts=line.split('\t');if(parts.length<2)return null;return [parts.shift().trim(),parts.join(' | ').trim()]}).filter(Boolean)).filter(block=>block.length);}
-function setMode(m){mode=m;el('reader').classList.toggle('hidden-en',m==='hide-en'||m==='practice');el('reader').classList.toggle('hidden-vi',m==='hide-vi');el('reader').classList.toggle('clickable',m==='practice');['both','hide-en','hide-vi','practice'].forEach(k=>el(k).setAttribute('aria-pressed',String(k===m)));document.querySelectorAll('.pair').forEach(p=>p.classList.remove('revealed'));}
-function render(){el('lesson-title').textContent=state.title;const parent=el('passages');parent.replaceChildren();parse(state.pairs).forEach(block=>{let row=document.createElement('div');row.className='paragraph';block.forEach(([vi,en])=>{let pair=document.createElement('div');pair.className='pair';pair.tabIndex=0;pair.setAttribute('role','button');pair.setAttribute('aria-label','Reveal English for '+vi);let top=document.createElement('span');top.className='vi';top.textContent=vi;let bottom=document.createElement('span');bottom.className='en';bottom.textContent=en;pair.append(top,bottom);function reveal(){if(mode==='practice')pair.classList.toggle('revealed');}pair.addEventListener('click',reveal);pair.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();reveal();}});row.append(pair);});parent.append(row)});setMode(mode)}
-['both','hide-en','hide-vi','practice'].forEach(id=>el(id).onclick=()=>setMode(id));el('edit-toggle').onclick=()=>{el('editor').hidden=!el('editor').hidden;if(!el('editor').hidden)el('editor').scrollIntoView({behavior:'smooth',block:'start'});};
+const studyModes = ['both', 'hide-en', 'hide-vi', 'practice'];
+const passages = el('passages');
+
+function setMode(nextMode) {
+  mode = nextMode;
+  const practicing = mode === 'practice';
+  const reader = el('reader');
+  reader.classList.toggle('hidden-en', mode === 'hide-en' || practicing);
+  reader.classList.toggle('hidden-vi', mode === 'hide-vi');
+  reader.classList.toggle('clickable', practicing);
+  el('practice-hint').hidden = !practicing;
+
+  studyModes.forEach(id => el(id).setAttribute('aria-pressed', String(id === mode)));
+  reader.querySelectorAll('.pair').forEach(pair => {
+    pair.classList.remove('revealed');
+    if (practicing) {
+      pair.tabIndex = 0;
+      pair.setAttribute('role', 'button');
+      pair.setAttribute('aria-expanded', 'false');
+    } else {
+      pair.removeAttribute('tabindex');
+      pair.removeAttribute('role');
+      pair.removeAttribute('aria-expanded');
+    }
+  });
+}
+
+function render() {
+  el('lesson-title').textContent = state.title;
+  passages.replaceChildren();
+
+  parse(state.pairs).forEach(block => {
+    const paragraph = document.createElement('section');
+    paragraph.className = 'paragraph';
+
+    block.forEach(([vi, en]) => {
+      const pair = document.createElement('div');
+      pair.className = 'pair';
+      const vietnamese = document.createElement('span');
+      vietnamese.className = 'vi';
+      vietnamese.lang = 'vi';
+      vietnamese.textContent = vi;
+      const english = document.createElement('span');
+      english.className = 'en';
+      english.textContent = en;
+      pair.append(vietnamese, english);
+
+      function reveal() {
+        const revealed = pair.classList.toggle('revealed');
+        pair.setAttribute('aria-expanded', String(revealed));
+      }
+
+      pair.addEventListener('click', () => {
+        if (mode === 'practice') reveal();
+      });
+      pair.addEventListener('keydown', event => {
+        if (mode === 'practice' && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          if (!event.repeat) reveal();
+        }
+      });
+      paragraph.append(pair);
+    });
+    passages.append(paragraph);
+  });
+  setMode(mode);
+}
+
+const mobileLayout = window.matchMedia('(max-width: 680px)');
+const sidebar = el('sidebar');
+const sidebarToggle = el('sidebar-toggle');
+
+function setSidebarCollapsed(collapsed) {
+  sidebar.classList.toggle('collapsed', collapsed);
+  sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+  el('sidebar-toggle-label').textContent = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+}
+
+setSidebarCollapsed(mobileLayout.matches);
+mobileLayout.addEventListener('change', event => setSidebarCollapsed(event.matches));
+sidebarToggle.onclick = () => setSidebarCollapsed(!sidebar.classList.contains('collapsed'));
+sidebar.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && !sidebar.classList.contains('collapsed')) {
+    setSidebarCollapsed(true);
+    sidebarToggle.focus();
+  }
+});
+
+function dismissMobileSidebar() {
+  if (mobileLayout.matches) setSidebarCollapsed(true);
+}
+
+studyModes.forEach(id => {
+  el(id).onclick = () => {
+    setMode(id);
+    dismissMobileSidebar();
+  };
+});
+el('edit-toggle').onclick = () => {
+  const editor = el('editor');
+  editor.hidden = !editor.hidden;
+  el('edit-toggle').setAttribute('aria-expanded', String(!editor.hidden));
+  dismissMobileSidebar();
+  if (!editor.hidden) el('title-input').focus();
+};
+document.querySelector('.content').addEventListener('focusin', dismissMobileSidebar);
+el('print').onclick = () => {
+  dismissMobileSidebar();
+  window.print();
+};
+
 function populate(){el('title-input').value=state.title;el('pairs-input').value=state.pairs;}populate();render();
 el('save').onclick=()=>{let pairs=el('pairs-input').value.trim();if(!pairs||!parse(pairs).length){el('status').textContent='Add at least one Vietnamese | English pair.';return;}state={title:el('title-input').value.trim()||'Bilingual lesson',pairs};localStorage.setItem('bilingual-reader-v1',JSON.stringify(state));render();el('status').textContent='Saved on this device. Preview above updated.';window.scrollTo({top:0,behavior:'smooth'});};
 el('export').onclick=()=>{const content=`# ${el('title-input').value}\n\n${el('pairs-input').value}`;let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type:'text/plain;charset=utf-8'}));a.download='bilingual-lesson.txt';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
