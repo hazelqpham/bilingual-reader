@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bilingual Phrase Reader</title>
+<style>
+:root{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:#183020;background:#f5f7f2}*{box-sizing:border-box}body{margin:0}.shell{max-width:1100px;margin:auto;padding:24px 18px 65px}header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}h1{font-size:clamp(23px,3vw,34px);margin:0}p{line-height:1.55}.hint{color:#516255;font-size:14px}.panel{border-radius:16px;background:white;border:1px solid #dce4da;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px #162c1a09}.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}button,.file-label{font:inherit;border-radius:10px;padding:10px 13px;border:1px solid #c6d1c4;background:#fff;color:#173821;cursor:pointer;font-weight:600}button:hover,.file-label:hover{background:#edf3e9}button.primary{background:#27563a;color:white;border-color:#27563a}button.primary:hover{background:#19452c}button[aria-pressed=true]{background:#dcefdc;border-color:#72a67c}.reader{background:#263e2a;color:#fff;border-radius:16px;padding:clamp(18px,3vw,34px);min-height:200px}.reader h2{font-size:18px;margin:0 0 22px;color:#fff}.paragraph{display:flex;flex-wrap:wrap;gap:18px 20px;align-items:flex-start;margin-bottom:24px}.paragraph:last-child{margin-bottom:0}.pair{display:flex;flex-direction:column;gap:5px;max-width:100%;min-width:0;break-inside:avoid;vertical-align:top}.vi{font-size:clamp(16px,1.9vw,21px);font-weight:700;line-height:1.4;overflow-wrap:break-word}.en{color:#ffdb75;font-size:clamp(16px,1.9vw,21px);font-weight:700;line-height:1.4;overflow-wrap:break-word}.hidden-en .en{visibility:hidden}.hidden-vi .vi{visibility:hidden}.clickable .pair{cursor:pointer;border-radius:5px}.clickable .pair:hover{outline:1px dashed #86b993;outline-offset:5px}.pair.revealed .en,.pair.revealed .vi{visibility:visible}.editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}textarea,input[type=text]{font:inherit;padding:11px;border:1px solid #bac9b7;border-radius:9px;width:100%}textarea{min-height:260px;resize:vertical;font-family:ui-monospace,Consolas,monospace;font-size:13px;line-height:1.55}.small{font-size:13px;color:#526558}details summary{cursor:pointer;font-weight:700}pre{white-space:pre-wrap;background:#f0f4ee;border-radius:8px;padding:10px;font-size:12px}.notice{background:#fef4d2;padding:10px 12px;border-radius:9px;color:#664800;font-size:13px}.status{font-size:13px;color:#466c4d;min-height:20px}.foot{margin-top:16px}.file-label input{display:none}@media(max-width:640px){.editor-grid{grid-template-columns:1fr}.shell{padding:15px 12px 50px}.reader{padding:20px 16px}.paragraph{gap:15px 14px}}@media print{body{background:white}.shell{max-width:none;padding:0}.panel.controls,.panel.editor,.toolbar,.hint,header button{display:none!important}.reader{background:white!important;color:#111!important;padding:0}.reader h2,.vi{color:black!important}.en{color:#9a6200!important}.pair{break-inside:avoid}.hidden-en .en,.hidden-vi .vi{visibility:visible!important}}
+</style>
+</head>
+<body><main class="shell"><header><div><h1>📖 Bilingual Phrase Reader</h1><p class="hint">Vietnamese above English · Automatic alignment · No manual columns</p></div><button onclick="window.print()">🖨 Print / Save PDF</button></header>
+<section class="panel controls"><strong>Study mode</strong><div class="toolbar"><button id="both" aria-pressed="true">Show both</button><button id="hide-en" aria-pressed="false">Hide English</button><button id="hide-vi" aria-pressed="false">Hide Vietnamese</button><button id="practice" aria-pressed="false">Tap to reveal</button><button id="edit-toggle">✏️ Edit lesson</button></div><div class="small">In “Tap to reveal,” select a phrase to reveal its hidden English translation.</div></section>
+<section class="panel"><div class="reader" id="reader"><h2 id="lesson-title">First Message from the Virgin Mary</h2><div id="passages"></div></div></section>
+<section class="panel editor" id="editor" hidden><h2>Edit lesson</h2><p class="hint">Paste one aligned Vietnamese–English pair per line. Separate the two with a <b>TAB</b> (or <b> | </b>). Leave a blank line to start a new paragraph. You can ask ChatGPT to generate this exact format.</p><label for="title-input"><b>Title</b></label><input type="text" id="title-input" value="First Message from the Virgin Mary"/><div class="editor-grid"><div><p><b>Phrase pairs</b></p><textarea id="pairs-input" spellcheck="false"></textarea></div><div><p><b>How to paste</b></p><pre>(Loan báo | (Announcing
+những lời tiên tri trong tương lai | the future prophecies
+vẫn còn | still
+sẽ được tiếp nhận | to be received
+
+bởi | by
+người nhận thị kiến riêng tư, | private visionary,</pre><p class="notice">The vertical bar <b>|</b> separates the two languages. Avoid using it inside a phrase. Blank lines create new paragraphs.</p><p class="small">Everything runs in this browser. “Save lesson” stores your work on this device. “Download lesson” creates a backup text file.</p></div></div><div class="toolbar"><button class="primary" id="save">Save lesson</button><button id="export">Download lesson (.txt)</button><label class="file-label">Import lesson <input type="file" id="import" accept=".txt,text/plain"/></label><button id="restore">Restore example</button></div><div class="status" id="status"></div></section><p class="foot hint">For classroom use, create or translate the phrase pairs carefully. This reader aligns phrases automatically; it does not perform AI translation.</p></main>
+<script>
+const SAMPLE=`Thông điệp đầu tiên | First Message
+từ | from
+Đức Trinh Nữ Maria | the Virgin Mary
+
+Thứ Hai, | Monday,
+ngày 8 tháng 11 năm 2010 | November 8th, 2010
+lúc 15 giờ 30 | @ 15:30
+
+Được tiếp nhận | Received
+thứ Hai | Monday
+ngày 8 | 8th
+tháng 11 | November
+năm 2010 | 2010
+lúc 3 giờ 30 chiều | 3.30pm
+sau khi | after
+đọc | saying
+chuỗi Mân Côi | the Rosary
+tại nhà | at Home
+
+(Loan báo | (Announcing
+những lời tiên tri trong tương lai | the future prophecies
+vẫn còn | still
+sẽ được tiếp nhận | to be received
+bởi | by
+người nhận thị kiến riêng tư, | private visionary,
+người mà | who
+hoàn toàn không biết | had no idea
+về điều mà | as to what
+bà ấy | she
+đang được yêu cầu | was being asked
+làm | to do
+vào thời điểm ấy.) | at this point.)`;
+const el=id=>document.getElementById(id);let mode='both';
+let state={title:'First Message from the Virgin Mary',pairs:SAMPLE};try{const saved=localStorage.getItem('bilingual-reader-v1');if(saved){const parsed=JSON.parse(saved);if(typeof parsed.title==='string'&&typeof parsed.pairs==='string')state=parsed;}}catch{}
+function parse(s){return s.trim().split(/\n\s*\n/).map(block=>block.split('\n').map(line=>{let parts=line.split(/\s*\|\s*/);if(parts.length<2)parts=line.split('\t');if(parts.length<2)return null;return [parts.shift().trim(),parts.join(' | ').trim()]}).filter(Boolean)).filter(block=>block.length);}
+function setMode(m){mode=m;el('reader').classList.toggle('hidden-en',m==='hide-en'||m==='practice');el('reader').classList.toggle('hidden-vi',m==='hide-vi');el('reader').classList.toggle('clickable',m==='practice');['both','hide-en','hide-vi','practice'].forEach(k=>el(k).setAttribute('aria-pressed',String(k===m)));document.querySelectorAll('.pair').forEach(p=>p.classList.remove('revealed'));}
+function render(){el('lesson-title').textContent=state.title;const parent=el('passages');parent.replaceChildren();parse(state.pairs).forEach(block=>{let row=document.createElement('div');row.className='paragraph';block.forEach(([vi,en])=>{let pair=document.createElement('div');pair.className='pair';pair.tabIndex=0;pair.setAttribute('role','button');pair.setAttribute('aria-label','Reveal English for '+vi);let top=document.createElement('span');top.className='vi';top.textContent=vi;let bottom=document.createElement('span');bottom.className='en';bottom.textContent=en;pair.append(top,bottom);function reveal(){if(mode==='practice')pair.classList.toggle('revealed');}pair.addEventListener('click',reveal);pair.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();reveal();}});row.append(pair);});parent.append(row)});setMode(mode)}
+['both','hide-en','hide-vi','practice'].forEach(id=>el(id).onclick=()=>setMode(id));el('edit-toggle').onclick=()=>{el('editor').hidden=!el('editor').hidden;if(!el('editor').hidden)el('editor').scrollIntoView({behavior:'smooth',block:'start'});};
+function populate(){el('title-input').value=state.title;el('pairs-input').value=state.pairs;}populate();render();
+el('save').onclick=()=>{let pairs=el('pairs-input').value.trim();if(!pairs||!parse(pairs).length){el('status').textContent='Add at least one Vietnamese | English pair.';return;}state={title:el('title-input').value.trim()||'Bilingual lesson',pairs};localStorage.setItem('bilingual-reader-v1',JSON.stringify(state));render();el('status').textContent='Saved on this device. Preview above updated.';window.scrollTo({top:0,behavior:'smooth'});};
+el('export').onclick=()=>{const content=`# ${el('title-input').value}\n\n${el('pairs-input').value}`;let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type:'text/plain;charset=utf-8'}));a.download='bilingual-lesson.txt';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
+el('import').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;let txt=await file.text();if(txt.startsWith('# ')){const split=txt.indexOf('\n');el('title-input').value=txt.slice(2,split);txt=txt.slice(split+1).trim();}el('pairs-input').value=txt;el('status').textContent='Imported. Click Save lesson to update the reader.';e.target.value='';};
+el('restore').onclick=()=>{el('title-input').value='First Message from the Virgin Mary';el('pairs-input').value=SAMPLE;el('status').textContent='Example loaded in editor. Click Save lesson to apply.';};
+</script></body></html>
